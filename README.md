@@ -16,7 +16,7 @@ There are some desciplies to follow for the subject:
 
 Notes about internals:
 
-The program utilizes two levels of locks - container level lock and container-element level lock.
+The program utilizes two levels of locks - *container level lock* and *container-element level lock*.
 
 The former, the lock which resides in the data structure layer, protects change in the data structure in multi-threaded environment. As to CRUD operation, this level of lock takes READ lock on READ and also UPDATE operation, while it takes WRITE lock on CREATE and DELETE lock, since both of them change the entire data structure.
 
