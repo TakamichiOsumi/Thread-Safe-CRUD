@@ -1,3 +1,6 @@
 [submodule "Linked-List"]
 	path = Linked-List
 	url = https://github.com/TakamichiOsumi/Linked-List.git
+[submodule "Read-Write-Locks"]
+	path = Read-Write-Locks
+	url = https://github.com/TakamichiOsumi/Read-Write-Locks.git
