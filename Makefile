@@ -27,7 +27,7 @@ employee.o: employee.c
 .phony: clean test
 
 clean:
-	for dir in $(SUBDIRS); do make -C $$dir; done
+	for dir in $(SUBDIRS); do cd $$dir; make clean; cd ..; done
 	rm -rf $(PROGRAM) *.o
 
 test: $(PROGRAM)
