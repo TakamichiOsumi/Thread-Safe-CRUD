@@ -1,19 +1,16 @@
 CC	= gcc
 CFLAGS	= -O0 -Wall
-SUBDIR	= Linked-List
-LIB_PATH	= -L $(CURDIR)/$(SUBDIR)
+SUBDIR1	= Linked-List
+SUBDIR2 = Read-Write-Locks
+SUBDIRS	= $(SUBDIR1) $(SUBDIR2)
+LIB_PATH	= -L $(CURDIR)/$(SUBDIR1) -L $(CURDIR)/$(SUBDIR2)
 LOCAL_LIBS	= -llinked_list
-SUBMODULE_IS_READY	= ./$(SUBDIR)/Makefile
 PROGRAM	= exec_crud_threads
 
 all: $(PROGRAM)
 
 liblinked_list.a:
-ifeq ($(SUBMODULE_IS_READY), $(wildcard ./$(SUBDIR)/Make*))
-	@cd $(SUBDIR); make; cd ../
-else
-	$(error $(SUBDIRS)/Makefile is missing. Run 'git submodule init&update')
-endif
+	for dir in $(SUBDIRS); do make -C $$dir; done
 
 $(PROGRAM): liblinked_list.a employee_crud.o ref_count.o
 	$(CC) $(CFLAGS) $(LIB_PATH) $(LOCAL_LIBS)  launch_employee_CRUD_threads.c employee_crud.o ref_count.o employee.o -o $(PROGRAM)
@@ -30,12 +27,8 @@ employee.o: employee.c
 .phony: clean test
 
 clean:
-ifeq ($(SUBMODULE_IS_READY), $(wildcard ./$(SUBDIR)/Make*))
-	@cd $(SUBDIR); make clean; cd ../
+	for dir in $(SUBDIRS); do make -C $$dir; done
 	rm -rf $(PROGRAM) *.o
-else
-	rm -rf $(PROGRAM) *.o
-endif
 
 test: $(PROGRAM)
 	@./$(PROGRAM) && echo "Successful if the result is zero >>> $$?"
