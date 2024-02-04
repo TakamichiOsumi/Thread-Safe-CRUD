@@ -6,10 +6,19 @@
 #include "ref_count.h"
 #include "employee.h"
 #include "employee_crud.h"
+#include "Linked-List/linked_list.h"
+#include "Read-Write-Locks/rw_locks.h"
 
 #define THREADS_LOOP 4000
+/*
+ * Narrow down the range of the ids where threads access,
+ * which results in their simultaneous accesses to the same data for debugging.
+ */
 #define EMPLOYEE_ID_RANGE 8
+#define MAX_THREADS_ACCESS 4
 
+
+/* Define some utility functions for debugging */
 void
 assert_dump_handler(int sig, siginfo_t *info, void *q){
     fprintf(stderr,
@@ -31,6 +40,7 @@ prepare_assertion_failure(void){
     sigaction(SIGABRT, &act, NULL);
 }
 
+/* thread for CREATE operation */
 static void *
 create_thread(void *arg){
     employees_list *elist = (employees_list *) arg;
@@ -49,6 +59,7 @@ create_thread(void *arg){
     return NULL;
 }
 
+/* thread for READ operation */
 static void *
 read_thread(void *arg){
     employees_list *elist = (employees_list *) arg;
@@ -65,6 +76,7 @@ read_thread(void *arg){
     return NULL;
 }
 
+/* thread for UPDATE operation */
 static void *
 update_thread(void *arg){
     employees_list *elist = (employees_list *) arg;
@@ -81,6 +93,7 @@ update_thread(void *arg){
     return NULL;
 }
 
+/* thread for DELETE operation */
 static void *
 delete_thread(void *arg){
     employees_list *elist = (employees_list *) arg;
@@ -110,7 +123,7 @@ main(void){
     }
     
     employees_container->elist = ll_init(employee_key_match);
-    pthread_rwlock_init(&employees_container->elist_rwlock, NULL);
+    employees_container->elist_rwlock = rw_lock_init(MAX_THREADS_ACCESS);
 
     pthread_create(&thread_handlers[0], NULL, create_thread,
 		   employees_container);

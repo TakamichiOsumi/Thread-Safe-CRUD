@@ -2,7 +2,7 @@
 #include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include "Linked-List/linked_list.h"
+#include "Read-Write-Locks/rw_locks.h"
 #include "ref_count.h"
 #include "employee_crud.h"
 #include "employee.h"
@@ -72,11 +72,11 @@ emp_create_op_fn(employees_list *list, uintptr_t id, char *name){
     uintptr_t key = id;
     employee *e;
 
-    pthread_rwlock_wrlock(&list->elist_rwlock);
+    rw_lock_wr_lock(list->elist_rwlock);
 
     if ((n = ll_search_by_key(list->elist, (void *) key)) != NULL){
 	emp_crud_fail(EMP_CREATE, key, name, false);
-	pthread_rwlock_unlock(&list->elist_rwlock);
+	rw_lock_unlock(list->elist_rwlock);
 	return;
     }
 
@@ -86,7 +86,7 @@ emp_create_op_fn(employees_list *list, uintptr_t id, char *name){
     emp_crud_succeed(EMP_CREATE, e);
     ref_count_inc(&e->rc);
 
-    pthread_rwlock_unlock(&list->elist_rwlock);
+    rw_lock_unlock(list->elist_rwlock);
 }
 
 /* READ */
@@ -95,23 +95,23 @@ emp_read_op_fn(employees_list *list, void *key){
     employee *e;
     node *n;
 
-    pthread_rwlock_rdlock(&list->elist_rwlock);
+    rw_lock_rd_lock(list->elist_rwlock);
 
     if ((n = ll_search_by_key(list->elist, key)) == NULL){
 	emp_crud_fail(EMP_READ, (uintptr_t) key, NULL, false);
-	pthread_rwlock_unlock(&list->elist_rwlock);
+	rw_lock_unlock(list->elist_rwlock);
 	return;
     }
 
     e = (employee *) n->data;
     thread_using_object(&e->rc);
-    pthread_rwlock_rdlock(&e->employee_rwlock);
-
-    pthread_rwlock_unlock(&list->elist_rwlock);
+    rw_lock_rd_lock(e->employee_rwlock);
+    rw_lock_unlock(list->elist_rwlock);
 
     /* Perform the UPDATE operation on the employee object */
     emp_crud_succeed(EMP_READ, e);
-    pthread_rwlock_unlock(&e->employee_rwlock);
+
+    rw_lock_unlock(e->employee_rwlock);
 
     if (thread_using_object_done(&e->rc)){
 	printf("READ operation has done for employee id = %lu\n",
@@ -125,24 +125,24 @@ emp_update_op_fn(employees_list *list, void *key){
     employee *e;
     node *n;
 
-    pthread_rwlock_rdlock(&list->elist_rwlock);
+    rw_lock_rd_lock(list->elist_rwlock);
 
     if ((n = ll_search_by_key(list->elist, key)) == NULL){
 	emp_crud_fail(EMP_UPDATE, (uintptr_t) key, NULL, false);
-	pthread_rwlock_unlock(&list->elist_rwlock);
+	rw_lock_unlock(list->elist_rwlock);
 	return;
     }
 
     e = (employee *) n->data;
     thread_using_object(&e->rc);
-    pthread_rwlock_wrlock(&e->employee_rwlock);
-
-    pthread_rwlock_unlock(&list->elist_rwlock);
+    rw_lock_wr_lock(e->employee_rwlock);
+    rw_lock_unlock(list->elist_rwlock);
 
     /* Perform the UPDATE operation on the employee object */
     e->updated_flag = true;
     emp_crud_succeed(EMP_UPDATE, e);
-    pthread_rwlock_unlock(&e->employee_rwlock);
+
+    rw_lock_unlock(e->employee_rwlock);
 
     if (thread_using_object_done(&e->rc)){
 	printf("UPDATE operation has done for employee id = %lu\n",
@@ -156,11 +156,11 @@ emp_delete_op_fn(employees_list *list, void *key){
     employee *e;
     node *n;
 
-    pthread_rwlock_wrlock(&list->elist_rwlock);
+    rw_lock_wr_lock(list->elist_rwlock);
 
     if ((n = ll_search_by_key(list->elist, key)) == NULL){
 	emp_crud_fail(EMP_DELETE, (uintptr_t) key, NULL, false);
-	pthread_rwlock_unlock(&list->elist_rwlock);
+	rw_lock_unlock(list->elist_rwlock);
 	return;
     }
 
@@ -170,10 +170,8 @@ emp_delete_op_fn(employees_list *list, void *key){
     n = ll_remove(list->elist, key);
     emp_crud_succeed(EMP_DELETE, e);
 
-    // pthread_rwlock_rdlock(&e->employee_rwlock);
-    pthread_rwlock_unlock(&list->elist_rwlock);
+    rw_lock_unlock(list->elist_rwlock);
 
-    //pthread_rwlock_unlock(&e->employee_rwlock);
     assert(ref_count_dec_and_iszero(&e->rc) == false);
 
     if (thread_using_object_done(&e->rc)){

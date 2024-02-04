@@ -2,6 +2,7 @@
 #define __EMPLOYEE__
 
 #include "Linked-List/linked_list.h"
+#include "Read-Write-Locks/rw_locks.h"
 #include "ref_count.h"
 
 #define BUF_SIZE 64
@@ -14,7 +15,7 @@ typedef struct employee {
     ref_count rc;
 
     /* Container-element level read/write lock */
-    pthread_rwlock_t employee_rwlock;
+    rw_lock *employee_rwlock;
 
 } employee;
 
@@ -23,7 +24,7 @@ typedef struct employees_list {
     linked_list *elist;
 
     /* Container level read/write lock */
-    pthread_rwlock_t elist_rwlock;
+    rw_lock *elist_rwlock;
 
 } employees_list;
 
