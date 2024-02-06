@@ -73,7 +73,6 @@ emp_create_op_fn(employees_list *list, uintptr_t id, char *name){
     employee *e;
 
     rw_lock_wr_lock(list->elist_rwlock);
-
     if ((n = ll_search_by_key(list->elist, (void *) key)) != NULL){
 	emp_crud_fail(EMP_CREATE, key, name, false);
 	rw_lock_unlock(list->elist_rwlock);
@@ -96,7 +95,6 @@ emp_read_op_fn(employees_list *list, void *key){
     node *n;
 
     rw_lock_rd_lock(list->elist_rwlock);
-
     if ((n = ll_search_by_key(list->elist, key)) == NULL){
 	emp_crud_fail(EMP_READ, (uintptr_t) key, NULL, false);
 	rw_lock_unlock(list->elist_rwlock);
@@ -112,7 +110,6 @@ emp_read_op_fn(employees_list *list, void *key){
     emp_crud_succeed(EMP_READ, e);
 
     rw_lock_unlock(e->employee_rwlock);
-
     if (thread_using_object_done(&e->rc)){
 	printf("READ operation has done for employee id = %lu\n",
 	       (uintptr_t) e->id);

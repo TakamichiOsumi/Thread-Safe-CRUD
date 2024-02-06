@@ -31,4 +31,4 @@ clean:
 	rm -rf $(PROGRAM) *.o
 
 test: $(PROGRAM)
-	@./$(PROGRAM) && echo "Successful if the result is zero >>> $$?"
+	@./$(PROGRAM) &> /dev/null && echo "Successful if the result is zero >>> $$?"
